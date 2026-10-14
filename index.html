@@ -1,11 +1,13 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
-<style>
+    <title>Hello World | Text Analyzer</title>
+
+    <style>
         body {
             margin: 0;
             min-height: 100vh;
@@ -15,14 +17,19 @@
             font-family: Arial, sans-serif;
             background: #7db9f5;
             color: #0f172a;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .card {
             text-align: center;
             background: white;
-            padding: 48px;
+            padding: 40px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 520px;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -34,13 +41,170 @@
             color: #64748b;
             line-height: 1.6;
         }
+
+        h2 {
+            margin-top: 30px;
+            font-size: 23px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 15px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #results {
+            margin-top: 20px;
+            padding: 16px;
+            background: #eff6ff;
+            border-radius: 10px;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        #results h3 {
+            margin-top: 0;
+        }
+
+        #results p {
+            color: #0f172a;
+        }
+
+        #status {
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="card">
+    <main class="card">
         <h1>Hello World!</h1>
         <p>My first web application using Python and FastAPI.</p>
-    </div>
+
+        <h2>Text Analyzer</h2>
+        <p>Enter some text and let the backend analyze it.</p>
+
+        <form id="analyzeForm">
+            <textarea
+                id="textInput"
+                placeholder="Type something here..."
+                required
+            ></textarea>
+
+            <button id="analyzeButton" type="submit">
+                Analyze Text
+            </button>
+        </form>
+
+        <p id="status" role="status"></p>
+
+        <section id="results" class="hidden" aria-live="polite">
+            <h3>Analysis Results</h3>
+            <p>Word count: <strong id="wordCount"></strong></p>
+            <p>Character count: <strong id="characterCount"></strong></p>
+            <p>Uppercase text:</p>
+            <p id="uppercaseText"></p>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById("analyzeForm");
+        const textInput = document.getElementById("textInput");
+        const analyzeButton = document.getElementById("analyzeButton");
+        const status = document.getElementById("status");
+        const results = document.getElementById("results");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const text = textInput.value;
+
+            if (!text.trim()) {
+                status.textContent = "Please enter some text first.";
+                results.classList.add("hidden");
+                return;
+            }
+
+            analyzeButton.disabled = true;
+            status.textContent = "Analyzing...";
+            results.classList.add("hidden");
+
+            try {
+                const response = await fetch("/api/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error("The API returned an error.");
+                }
+
+                const data = await response.json();
+
+                document.getElementById("wordCount").textContent =
+                    data.word_count;
+
+                document.getElementById("characterCount").textContent =
+                    data.character_count;
+
+                document.getElementById("uppercaseText").textContent =
+                    data.uppercase_text;
+
+                results.classList.remove("hidden");
+                status.textContent = "Analysis complete!";
+            } catch (error) {
+                status.textContent =
+                    "Could not connect to the backend. Please try again.";
+                console.error(error);
+            } finally {
+                analyzeButton.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
